@@ -41,3 +41,90 @@ workflows:
   build-and-push:
     jobs:
       - build-and-test
+      - aws-ecr/build-and-push-image:
+          name: build-nginx
+          requires:
+            - build-and-test
+          attach-workspace: true
+          workspace-root: workspace
+          aws-cli-version: latest
+          create-repo: true
+          dockerfile: Dockerfile.nginx
+          extra-build-args: '--compress --build-arg COMMIT=$CIRCLE_SHA1'
+          path: ./docker
+          platform: linux/amd64
+          public-registry: false
+          push-image: true
+          repo: nginx
+          repo-scan-on-push: true
+          tag: 'develop'
+          post-steps:
+              - aws-ecr/tag-image:
+                  repo: nginx
+                  source-tag: 'develop'
+                  target-tag: $CIRCLE_BUILD_NUM
+              - aws-ecr/tag-image:
+                  repo: nginx
+                  source-tag: 'develop'
+                  target-tag: $CIRCLE_SHA1
+              - jira/notify:
+                  environment_type: development
+                  job_type: deployment
+      - aws-ecr/build-and-push-image:
+          name: build-api
+          requires:
+            - build-and-test
+          attach-workspace: true
+          workspace-root: certs
+          aws-cli-version: latest
+          create-repo: true
+          dockerfile: Dockerfile.api
+          extra-build-args: '--compress'
+          path: ./docker
+          platform: linux/amd64
+          public-registry: false
+          push-image: true
+          repo: api
+          repo-scan-on-push: true
+          tag: 'develop'
+          post-steps:
+              - aws-ecr/tag-image:
+                  repo: api
+                  source-tag: 'develop'
+                  target-tag: $CIRCLE_BUILD_NUM
+              - aws-ecr/tag-image:
+                  repo: api
+                  source-tag: 'develop'
+                  target-tag: $CIRCLE_SHA1
+              - jira/notify:
+                  environment_type: development
+                  job_type: deployment
+      - aws-ecr/build-and-push-image:
+          name: build-socket
+          requires:
+            - build-and-test
+          attach-workspace: true
+          aws-cli-version: latest
+          create-repo: true
+          context: ./socket
+          dockerfile: Dockerfile.dev
+          extra-build-args: '--compress'
+          path: ./socket
+          platform: linux/amd64
+          public-registry: false
+          push-image: true
+          repo: clientsocket
+          repo-scan-on-push: true
+          tag: 'develop'
+          post-steps:
+              - aws-ecr/tag-image:
+                  repo: clientsocket
+                  source-tag: 'develop'
+                  target-tag: $CIRCLE_BUILD_NUM
+              - aws-ecr/tag-image:
+                  repo: clientsocket
+                  source-tag: 'develop'
+                  target-tag: $CIRCLE_SHA1
+              - jira/notify:
+                  environment_type: development
+                  job_type: deployment
