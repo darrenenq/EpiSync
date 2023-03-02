@@ -26,7 +26,7 @@ jobs:
           command: echo "Copied UI to Workspace"
       - run:
           name: Run tests
-          command: echo "Ran tests!"
+          command: echo "Ran tests!!"
 
 workflows:
   build-and-push:
